@@ -1,5 +1,6 @@
 package com.example.feedback.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -8,6 +9,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 /**
  * Đánh giá chi tiết trên từng thuộc tính sản phẩm.
@@ -21,6 +23,7 @@ public class AttributeRating {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "feedback_id")
     private Feedback feedback;
@@ -35,7 +38,13 @@ public class AttributeRating {
     @Column(length = 500)
     private String comment;
 
+    @Transient
+    private String attributeName;
+
     public AttributeRating() {}
+
+    public String getAttributeName() { return attributeName; }
+    public void setAttributeName(String attributeName) { this.attributeName = attributeName; }
 
     public AttributeRating(Feedback feedback, Long attributeId, Integer rating, String comment) {
         this.feedback = feedback;

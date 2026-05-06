@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s \"http://localhost:8888/api/feedbacks/range?from=2026-04-01&to=2026-04-16\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); f=d[0]; print\\('customerName:', f.get\\('customerName'\\)\\); print\\('attr[0].attributeName:', f['attributeRatings'][0].get\\('attributeName'\\) if f.get\\('attributeRatings'\\) else 'N/A'\\)\")"
+    ]
+  }
+}

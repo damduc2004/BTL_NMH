@@ -1,5 +1,6 @@
 package com.example.product.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,6 +11,7 @@ public class ProductAttribute {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @ManyToOne(optional = false)
     @JoinColumn(name = "product_id")
     private Product product;

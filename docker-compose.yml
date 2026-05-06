@@ -126,6 +126,18 @@ services:
         condition: service_healthy
 
   # ----------------------------------------------------------
+  # frontend (Nginx – static HTML/JS)
+  # ----------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: demo/frontend:latest
+    container_name: frontend
+    ports:
+      - "3000:80"
+
+  # ----------------------------------------------------------
   # api-gateway
   # ----------------------------------------------------------
   api-gateway:
@@ -138,12 +150,14 @@ services:
       USER_SERVICE_URL:     "http://user-service:8082"
       PRODUCT_SERVICE_URL:  "http://product-service:8081"
       FEEDBACK_SERVICE_URL: "http://feedback-service:8083"
+      FRONTEND_URL:         "http://frontend:80"
     ports:
       - "8888:8080"
     depends_on:
       - user-service
       - product-service
       - feedback-service
+      - frontend
 
 volumes:
   mysql-user-data:

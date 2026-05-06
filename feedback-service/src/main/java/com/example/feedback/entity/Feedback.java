@@ -7,11 +7,13 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "feedbacks")
@@ -36,10 +38,16 @@ public class Feedback {
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "feedback", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<AttributeRating> attributeRatings = new ArrayList<>();
 
+    @Transient
+    private String customerName;
+
     public Feedback() {}
+
+    public String getCustomerName() { return customerName; }
+    public void setCustomerName(String customerName) { this.customerName = customerName; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

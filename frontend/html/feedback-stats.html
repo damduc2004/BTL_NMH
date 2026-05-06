@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thống kê phản hồi – Product Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #222; min-height: 100vh; }
+
+    .topbar {
+      background: #222; color: #fff;
+      padding: 0 32px; height: 52px; display: flex; align-items: center;
+      justify-content: space-between; position: sticky; top: 0; z-index: 200;
+    }
+    .topbar .brand { font-size: 16px; font-weight: 700; }
+    .topbar a { color: rgba(255,255,255,.75); text-decoration: none; font-size: 13px; }
+    .topbar a:hover { color: #fff; }
+
+    .breadcrumb {
+      background: #fff; border-bottom: 1px solid #e0e0e0;
+      padding: 9px 32px; display: flex; align-items: center; gap: 8px;
+      font-size: 13px; color: #888;
+    }
+    .breadcrumb span { color: #333; cursor: pointer; font-weight: 600; }
+    .breadcrumb span:hover { text-decoration: underline; }
+    .breadcrumb .sep { color: #ccc; }
+    .breadcrumb .current { color: #111; font-weight: 600; }
+
+    .page { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+
+    .card-box {
+      background: #fff; border-radius: 8px;
+      border: 1px solid #e0e0e0; margin-bottom: 20px; overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 22px; border-bottom: 1px solid #f0f0f0;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .card-header h3 { font-size: 14px; font-weight: 700; color: #111; }
+    .card-body { padding: 18px 22px; }
+
+    .btn { padding: 8px 18px; border-radius: 6px; border: none; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-primary { background: #222; color: #fff; }
+    .btn-primary:hover { background: #444; }
+    .btn-secondary { background: #eee; color: #333; border: 1px solid #ccc; }
+    .btn-secondary:hover { background: #ddd; }
+    .btn-sm { padding: 5px 10px; font-size: 12px; }
+    .btn-link { background: none; border: none; color: #333; font-size: 13px; font-weight: 600; cursor: pointer; padding: 0; text-decoration: underline; }
+    .btn-link:hover { color: #000; }
+
+    .filter-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+    .filter-group { display: flex; flex-direction: column; gap: 5px; }
+    .filter-group label { font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: .4px; }
+    .filter-group input[type=date], .filter-group input[type=text] {
+      padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px;
+      font-size: 13px; background: #fafafa; outline: none; min-width: 160px;
+    }
+    .filter-group input:focus { border-color: #555; background: #fff; }
+
+    .stats-row { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-box {
+      background: #fff; border-radius: 8px; border: 1px solid #e0e0e0;
+      padding: 16px 20px; flex: 1; min-width: 140px;
+    }
+    .stat-box .label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    .stat-box .value { font-size: 24px; font-weight: 700; color: #111; }
+    .stat-box .sub { font-size: 12px; color: #bbb; margin-top: 4px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 10px 14px; text-align: left; font-size: 12px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: .4px; border-bottom: 1px solid #e8e8e8; }
+    td { padding: 11px 14px; font-size: 13px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr.clickable:hover td { background: #f7f7f7; cursor: pointer; }
+
+    .stars { color: #888; letter-spacing: 1px; font-size: 13px; white-space: nowrap; }
+    .stars-empty { color: #ddd; }
+
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 700; background: #eee; color: #555; }
+    .badge-blue { background: #eee; color: #444; }
+    .badge-green { background: #e8e8e8; color: #333; }
+    .badge-orange { background: #eee; color: #666; }
+    .badge-red { background: #f0e0e0; color: #800; }
+
+    .score-hi { color: #333; font-weight: 700; }
+    .score-mid { color: #666; font-weight: 700; }
+    .score-lo { color: #900; font-weight: 700; }
+
+    .fb-card {
+      border: 1px solid #e0e0e0; border-radius: 8px; padding: 14px 16px;
+      margin-bottom: 10px; cursor: pointer; transition: border-color .15s;
+    }
+    .fb-card:hover { border-color: #888; }
+    .fb-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .fb-card-user { font-size: 13px; font-weight: 700; color: #111; }
+    .fb-card-time { font-size: 11px; color: #bbb; }
+    .fb-card-comment { font-size: 13px; color: #555; margin-top: 5px; line-height: 1.6; }
+    .fb-card-meta { display: flex; gap: 12px; margin-top: 8px; align-items: center; }
+    .fb-card-detail-link { margin-top: 8px; }
+
+    .detail-header { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+    .detail-field { background: #f8f8f8; border-radius: 6px; padding: 11px 14px; border: 1px solid #eee; }
+    .detail-field .df-label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 4px; }
+    .detail-field .df-value { font-size: 14px; font-weight: 700; color: #111; }
+
+    .placeholder { text-align: center; padding: 56px 40px; color: #bbb; }
+    .placeholder .icon { font-size: 44px; margin-bottom: 14px; }
+    .placeholder p { font-size: 14px; line-height: 1.8; }
+
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 600; color: #fff; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; }
+    .toast.show { opacity: 1; }
+    .toast.ok { background: #333; }
+    .toast.err { background: #900; }
+
+    .layer { display: none; }
+    .layer.active { display: block; }
+
+    .input-search { min-width: 220px; }
+    .card-header-hint { font-size: 12px; color: #999; }
+    .comment-block { background: #f8f8f8; border-radius: 6px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: #444; line-height: 1.7; border: 1px solid #eee; }
+    .comment-block-label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+    .detail-section-title { font-size: 13px; font-weight: 700; color: #111; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <a href="/index.html">← Trang chủ</a>
+    <span class="brand">Thống kê phản hồi</span>
+  </div>
+  <span style="font-size:14px;opacity:.9">Admin</span>
+</div>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb" id="breadcrumb">
+  <span onclick="goLayer(1)">Thống kê</span>
+</div>
+
+<div class="page">
+
+  <!-- ══════════════════════════════════════════════════
+       TẦNG 1 – Nhập thời gian + Danh sách sản phẩm
+  ══════════════════════════════════════════════════ -->
+  <div class="layer active" id="layer1">
+
+    <!-- Bộ lọc -->
+    <div class="card-box">
+      <div class="card-header"><h3>Khoảng thời gian thống kê</h3></div>
+      <div class="card-body">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label for="fromDate">Từ ngày</label>
+            <input type="date" id="fromDate" title="Ngày bắt đầu" />
+          </div>
+          <div class="filter-group">
+            <label for="toDate">Đến ngày</label>
+            <input type="date" id="toDate" title="Ngày kết thúc" />
+          </div>
+          <div class="filter-group">
+            <label for="productSearch">Tìm kiếm sản phẩm</label>
+            <input type="text" id="productSearch" class="input-search" placeholder="Nhập tên sản phẩm..." title="Tìm kiếm sản phẩm" />
+          </div>
+          <button type="button" class="btn btn-primary" onclick="doSearch()">Thống kê</button>
+          <button type="button" class="btn btn-secondary" onclick="resetFilter()">Đặt lại</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kết quả tầng 1 -->
+    <div id="layer1Result">
+      <div class="placeholder">
+        <div class="icon"></div>
+        <p>Chọn khoảng thời gian và nhấn <strong>Thống kê</strong><br/>để xem danh sách sản phẩm được đánh giá.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TẦNG 2 – Danh sách phản hồi của một sản phẩm
+  ══════════════════════════════════════════════════ -->
+  <div class="layer" id="layer2">
+    <div class="card-box">
+      <div class="card-header">
+        <h3 id="layer2Title">Phản hồi sản phẩm</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="goLayer(1)">← Quay lại</button>
+      </div>
+      <div class="card-body" id="layer2Body">
+        <div class="placeholder"><p>Đang tải...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════
+       TẦNG 3 – Chi tiết một phản hồi
+  ══════════════════════════════════════════════════ -->
+  <div class="layer" id="layer3">
+    <div class="card-box">
+      <div class="card-header">
+        <h3>Chi tiết phản hồi</h3>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="goLayer(2)">← Quay lại</button>
+      </div>
+      <div class="card-body" id="layer3Body">
+        <div class="placeholder"><p>Đang tải...</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page -->
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/feedback-stats.js"></script>
+</body>
+</html>

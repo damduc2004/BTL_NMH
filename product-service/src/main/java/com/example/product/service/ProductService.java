@@ -2,15 +2,16 @@ package com.example.product.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.product.dto.AttributeResponseDto;
-import com.example.product.dto.ProductCreateRequest;
-import com.example.product.dto.ProductResponse;
 import com.example.product.entity.Attribute;
 import com.example.product.entity.Category;
 import com.example.product.entity.Product;
@@ -37,119 +38,85 @@ public class ProductService {
     }
 
     @Transactional
-    public ProductResponse createProduct(ProductCreateRequest req) {
-        log.info("Creating product: name='{}', categoryId={}, fixedAttrs={}, extraAttrs={}",
-                req.getName(), req.getCategoryId(),
-                req.getFixedAttributes() != null ? req.getFixedAttributes().size() : 0,
-                req.getExtraAttributes() != null ? req.getExtraAttributes().size() : 0);
-        Category category = categoryRepository.findById(req.getCategoryId())
-                .orElseThrow(() -> {
-                    log.warn("Category not found: id={}", req.getCategoryId());
-                    return new IllegalArgumentException(
-                            "Category khong ton tai voi id: " + req.getCategoryId());
-                });
+    public Product createProduct(Map<String, Object> req) {
+        String name = (String) req.get("name");
+        Number price = (Number) req.get("price");
+        Number stock = (Number) req.get("stockQuantity");
+        Number categoryId = (Number) req.get("categoryId");
+
+        if (name == null || name.isBlank()) throw new IllegalArgumentException("Tên sản phẩm không được trống");
+        if (price == null) throw new IllegalArgumentException("Giá không được trống");
+        if (categoryId == null) throw new IllegalArgumentException("Danh mục không được trống");
+
+        Category category = categoryRepository.findById(categoryId.longValue())
+                .orElseThrow(() -> new IllegalArgumentException("Category không tồn tại: id=" + categoryId));
 
         Product product = new Product();
-        product.setName(req.getName());
-        product.setPrice(req.getPrice());
-        product.setStockQuantity(req.getStockQuantity());
+        product.setName(name.trim());
+        product.setPrice(new java.math.BigDecimal(price.toString()));
+        product.setStockQuantity(stock != null ? stock.intValue() : 0);
         product.setCategory(category);
 
         List<ProductAttribute> productAttributes = new ArrayList<>();
 
-        if (req.getFixedAttributes() != null) {
-            for (ProductCreateRequest.FixedAttributeEntry entry : req.getFixedAttributes()) {
-                Attribute attr = attributeRepository.findById(entry.getAttributeId())
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "Attribute khong ton tai voi id: " + entry.getAttributeId()));
-                productAttributes.add(new ProductAttribute(product, attr, entry.getValue()));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> fixedAttrs = (List<Map<String, Object>>) req.get("fixedAttributes");
+        if (fixedAttrs != null) {
+            for (Map<String, Object> entry : fixedAttrs) {
+                Long attrId = ((Number) entry.get("attributeId")).longValue();
+                String value = (String) entry.get("value");
+                Attribute attr = attributeRepository.findById(attrId)
+                        .orElseThrow(() -> new IllegalArgumentException("Attribute không tồn tại: id=" + attrId));
+                productAttributes.add(new ProductAttribute(product, attr, value));
             }
         }
 
-        if (req.getExtraAttributes() != null) {
-            for (ProductCreateRequest.ExtraAttributeEntry entry : req.getExtraAttributes()) {
-                if (entry.getName() == null || entry.getName().trim().isEmpty()) continue;
-                String trimmedName = entry.getName().trim();
-                Attribute attr = attributeRepository.findByName(trimmedName)
-                        .orElseGet(() -> attributeRepository.save(new Attribute(trimmedName)));
-                productAttributes.add(new ProductAttribute(product, attr, entry.getValue()));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> extraAttrs = (List<Map<String, Object>>) req.get("extraAttributes");
+        if (extraAttrs != null) {
+            for (Map<String, Object> entry : extraAttrs) {
+                String attrName = (String) entry.get("name");
+                String value = (String) entry.get("value");
+                if (attrName == null || attrName.isBlank()) continue;
+                Attribute attr = attributeRepository.findByName(attrName.trim())
+                        .orElseGet(() -> attributeRepository.save(new Attribute(attrName.trim())));
+                productAttributes.add(new ProductAttribute(product, attr, value));
             }
         }
 
         product.setProductAttributes(productAttributes);
         Product saved = productRepository.save(product);
-        log.info("[ADMIN] Product created: id={}, name='{}', category='{}', stock={}, attributes={}",
-                saved.getId(), saved.getName(), saved.getCategory().getName(),
-                saved.getStockQuantity(), saved.getProductAttributes().size());
-        return toResponse(saved);
+        log.info("[ADMIN] Product created: id={}, name='{}', category='{}'",
+                saved.getId(), saved.getName(), saved.getCategory().getName());
+        return saved;
     }
 
     @Transactional(readOnly = true)
-    public List<ProductResponse> getAllProducts() {
-        List<ProductResponse> list = productRepository.findAllByOrderByIdDesc().stream()
-                .map(this::toResponse)
-                .toList();
-        log.debug("getAllProducts: returned {} products", list.size());
-        return list;
-    }
-
-    @Transactional(readOnly = true)
-    public List<ProductResponse> searchProducts(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) {
-            return getAllProducts();
+    public Page<Product> getProducts(String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        if (keyword != null && !keyword.isBlank()) {
+            return productRepository.searchByKeyword(keyword.trim(), pageable);
         }
-        List<ProductResponse> list = productRepository.searchByKeyword(keyword.trim()).stream()
-                .map(this::toResponse)
-                .toList();
-        log.debug("searchProducts keyword='{}': returned {} products", keyword, list.size());
-        return list;
+        return productRepository.findAllByOrderByIdDesc(pageable);
     }
 
     @Transactional(readOnly = true)
-    public ProductResponse getProductById(Long id) {
-        log.info("[INTER-SERVICE] Nhan yeu cau lay thong tin san pham: id={}", id);
-        Product product = productRepository.findById(id)
-                .orElseThrow(() -> {
-                    log.warn("[INTER-SERVICE] Khong tim thay san pham: id={}", id);
-                    return new IllegalArgumentException("Product khong ton tai voi id: " + id);
-                });
-        log.info("[INTER-SERVICE] Tra ve san pham: id={}, name='{}', category='{}'",
-                product.getId(), product.getName(), product.getCategory().getName());
-        return toResponse(product);
+    public Product getProductById(Long id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Product không tồn tại: id=" + id));
     }
 
     @Transactional
     public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            log.warn("Delete failed - product not found: id={}", id);
-            throw new IllegalArgumentException("Product khong ton tai voi id: " + id);
+            throw new IllegalArgumentException("Product không tồn tại: id=" + id);
         }
         productRepository.deleteById(id);
         log.info("[ADMIN] Product deleted: id={}", id);
     }
 
-    public AttributeResponseDto getAttributeById(Long id) {
-        return attributeRepository.findById(id)
-                .map(attr -> new AttributeResponseDto(attr.getId(), attr.getName()))
-                .orElse(null);
-    }
-
-    private ProductResponse toResponse(Product product) {
-        ProductResponse res = new ProductResponse();
-        res.setId(product.getId());
-        res.setName(product.getName());
-        res.setPrice(product.getPrice());
-        res.setStockQuantity(product.getStockQuantity());
-        res.setCategoryId(product.getCategory().getId());
-        res.setCategoryName(product.getCategory().getName());
-        res.setAttributes(
-            product.getProductAttributes().stream()
-                .map(pa -> new ProductResponse.AttributeDto(
-                        pa.getAttribute().getId(),
-                        pa.getAttribute().getName(),
-                        pa.getValue()))
-                .toList()
-        );
-        return res;
+    @Transactional(readOnly = true)
+    public Attribute getAttributeById(Long id) {
+        return attributeRepository.findById(id).orElse(null);
     }
 }

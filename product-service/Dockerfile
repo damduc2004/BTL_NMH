@@ -10,6 +10,6 @@ RUN mvn package -pl product-service -am -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/product-service/target/product-service-*.war app.war
+COPY --from=build /app/product-service/target/product-service-*.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "app.war"]
+ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -3,6 +3,7 @@ package com.example.product.entity;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -16,9 +17,11 @@ public class Category {
     @Column(nullable = false, unique = true)
     private String name;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "category")
     private List<Product> products = new ArrayList<>();
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
         name = "category_attributes",

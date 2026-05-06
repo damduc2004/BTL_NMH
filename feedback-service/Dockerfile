@@ -10,6 +10,6 @@ RUN mvn package -pl feedback-service -am -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/feedback-service/target/feedback-service-*.war app.war
+COPY --from=build /app/feedback-service/target/feedback-service-*.jar app.jar
 EXPOSE 8083
-ENTRYPOINT ["java", "-jar", "app.war"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
