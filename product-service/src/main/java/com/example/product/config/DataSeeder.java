@@ -64,7 +64,7 @@ public class DataSeeder implements CommandLineRunner {
 
         // ===== Sample Products =====
         // Dien thoai
-        addProduct("iPhone 15 Pro Max", new BigDecimal("29990000"), dienThoai,
+        addProduct("iPhone 15 Pro Max", new BigDecimal("29990000"), 50, dienThoai,
                 List.of(
                     new String[]{"Thuong hieu", "Apple"},
                     new String[]{"Mau sac", "Titan Den"},
@@ -73,7 +73,7 @@ public class DataSeeder implements CommandLineRunner {
                     new String[]{"Xuat xu", "USA"}
                 ));
 
-        addProduct("Samsung Galaxy S24 Ultra", new BigDecimal("24990000"), dienThoai,
+        addProduct("Samsung Galaxy S24 Ultra", new BigDecimal("24990000"), 75, dienThoai,
                 List.of(
                     new String[]{"Thuong hieu", "Samsung"},
                     new String[]{"Mau sac", "Xanh duong"},
@@ -82,7 +82,7 @@ public class DataSeeder implements CommandLineRunner {
                     new String[]{"Xuat xu", "Han Quoc"}
                 ));
 
-        addProduct("Xiaomi 14 Ultra", new BigDecimal("18490000"), dienThoai,
+        addProduct("Xiaomi 14 Ultra", new BigDecimal("18490000"), 120, dienThoai,
                 List.of(
                     new String[]{"Thuong hieu", "Xiaomi"},
                     new String[]{"Mau sac", "Trang"},
@@ -92,7 +92,7 @@ public class DataSeeder implements CommandLineRunner {
                 ));
 
         // May tinh
-        addProduct("MacBook Air M3", new BigDecimal("32990000"), mayTinh,
+        addProduct("MacBook Air M3", new BigDecimal("32990000"), 30, mayTinh,
                 List.of(
                     new String[]{"Thuong hieu", "Apple"},
                     new String[]{"Mau sac", "Bac"},
@@ -101,7 +101,7 @@ public class DataSeeder implements CommandLineRunner {
                     new String[]{"Bao hanh", "12 thang"}
                 ));
 
-        addProduct("Dell XPS 15", new BigDecimal("38500000"), mayTinh,
+        addProduct("Dell XPS 15", new BigDecimal("38500000"), 20, mayTinh,
                 List.of(
                     new String[]{"Thuong hieu", "Dell"},
                     new String[]{"Mau sac", "Den"},
@@ -111,7 +111,7 @@ public class DataSeeder implements CommandLineRunner {
                 ));
 
         // Thoi trang
-        addProduct("Ao Polo Lacoste Classic", new BigDecimal("1890000"), thoiTrang,
+        addProduct("Ao Polo Lacoste Classic", new BigDecimal("1890000"), 200, thoiTrang,
                 List.of(
                     new String[]{"Thuong hieu", "Lacoste"},
                     new String[]{"Mau sac", "Do"},
@@ -120,7 +120,7 @@ public class DataSeeder implements CommandLineRunner {
                     new String[]{"Xuat xu", "Phap"}
                 ));
 
-        addProduct("Quan Jean Levi's 501", new BigDecimal("1490000"), thoiTrang,
+        addProduct("Quan Jean Levi's 501", new BigDecimal("1490000"), 150, thoiTrang,
                 List.of(
                     new String[]{"Thuong hieu", "Levi's"},
                     new String[]{"Mau sac", "Xanh duong dam"},
@@ -130,7 +130,7 @@ public class DataSeeder implements CommandLineRunner {
                 ));
 
         // Giay dep
-        addProduct("Nike Air Force 1", new BigDecimal("2790000"), giaydep,
+        addProduct("Nike Air Force 1", new BigDecimal("2790000"), 100, giaydep,
                 List.of(
                     new String[]{"Thuong hieu", "Nike"},
                     new String[]{"Mau sac", "Trang"},
@@ -139,7 +139,7 @@ public class DataSeeder implements CommandLineRunner {
                 ));
 
         // Do gia dung
-        addProduct("Noi com dien Cuckoo 1.8L", new BigDecimal("3290000"), doGiaDung,
+        addProduct("Noi com dien Cuckoo 1.8L", new BigDecimal("3290000"), 60, doGiaDung,
                 List.of(
                     new String[]{"Thuong hieu", "Cuckoo"},
                     new String[]{"Loai san pham", "Noi com dien"},
@@ -149,11 +149,12 @@ public class DataSeeder implements CommandLineRunner {
                 ));
     }
 
-    private void addProduct(String name, BigDecimal price, Category category,
+    private void addProduct(String name, BigDecimal price, int stock, Category category,
                              List<String[]> attrPairs) {
         Product p = new Product();
         p.setName(name);
         p.setPrice(price);
+        p.setStockQuantity(stock);
         p.setCategory(category);
 
         List<ProductAttribute> pas = new ArrayList<>();
